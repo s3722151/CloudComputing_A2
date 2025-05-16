@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AES-128-CBC Tool (Task 3.1)</title>
+    <!-- Load CryptoJS library for AES and MD5 operations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+
+<body>
+    <h1>AES-128-CBC Encryption/Decryption</h1>
+
+    <!-- 
+    Key Input Section 
+    - KC (Client Key) is pre-filled with my MD5 hash of "Joshua3722151"
+    - IV (Initialization Vector) is set to a default zero value for simplicity
+  -->
+    <label>Client Key (KC):</label>
+    <input type="text" id="key" value="26e5d99e6cf00eee433a5526ad36daad" readonly><br>
+
+    <label>IV (16-byte Hex):</label>
+    <input type="text" id="iv" value="00000000000000000000000000000000"><br>
+
+    <!-- Plaintext input for encryption -->
+    <label>Plaintext:</label>
+    <input type="text" id="plaintext" value="Hello, Kerberos!"><br>
+
+    <!-- Encryption button and output display -->
+    <button onclick="encrypt()">Encrypt</button>
+    <p id="ciphertext"></p>
+
+    <!-- Ciphertext input for decryption -->
+    <label>Ciphertext (Hex):</label>
+    <input type="text" id="ciphertextInput"><br>
+
+    <!-- Decryption button and output display -->
+    <button onclick="decrypt()">Decrypt</button>
+    <p id="decrypted"></p>
+
+    <script>
+        /**
+         * Encrypts plaintext using AES-128-CBC
+         * - Uses the key and IV from input fields
+         * - Outputs ciphertext in Hex format
+         */
+        function encrypt() {
+            // Get values from input fields
+            const key = document.getElementById("key").value;
+            const iv = document.getElementById("iv").value;
+            const plaintext = document.getElementById("plaintext").value;
+
+            // Perform AES-128-CBC encryption
+            const ciphertext = CryptoJS.AES.encrypt(
+                plaintext,                          // Plaintext to encrypt
+                CryptoJS.enc.Hex.parse(key),        // Key (converted from Hex string)
+                {
+                    iv: CryptoJS.enc.Hex.parse(iv),   // IV (converted from Hex string)
+                    mode: CryptoJS.mode.CBC           // CBC mode
+                }
+            ).ciphertext.toString(CryptoJS.enc.Hex); // Convert result to Hex string
+
+            // Display encrypted result
+            document.getElementById("ciphertext").innerText = `Encrypted: ${ciphertext}`;
+        }
+
+        /**
+         * Decrypts ciphertext using AES-128-CBC
+         * - Uses the key and IV from input fields
+         * - Expects ciphertext in Hex format
+         * - Outputs decrypted plaintext
+         */
+        function decrypt() {
+            // Get values from input fields
+            const key = document.getElementById("key").value;
+            const iv = document.getElementById("iv").value;
+            const ciphertext = document.getElementById("ciphertextInput").value;
+
+            // Perform AES-128-CBC decryption
+            const decrypted = CryptoJS.AES.decrypt(
+                {
+                    ciphertext: CryptoJS.enc.Hex.parse(ciphertext) // Parse Hex ciphertext
+                },
+                CryptoJS.enc.Hex.parse(key),        // Key (converted from Hex string)
+                {
+                    iv: CryptoJS.enc.Hex.parse(iv),   // IV (converted from Hex string)
+                    mode: CryptoJS.mode.CBC           // CBC mode
+                }
+            ).toString(CryptoJS.enc.Utf8);        // Convert result to UTF-8 string
+
+            // Display decrypted result
+            document.getElementById("decrypted").innerText = `Decrypted: ${decrypted}`;
+        }
+    </script>
+</body>
+
+</html>

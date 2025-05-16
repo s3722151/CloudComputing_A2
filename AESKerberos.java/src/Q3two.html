@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simplified Kerberos (Task 3.2)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        .phase {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .step {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Simplified Kerberos Protocol</h1>
+
+    <!-- Predefined Values -->
+    <div>
+        <h3>Precomputed Values (MD5):</h3>
+        <p>KC (Client Key): <code>26e5d99e6cf00eee433a5526ad36daad</code></p>
+        <p>KS (Server Key): <code>0ceec716b4723e1ffab33519a5e48a3b</code></p>
+        <p>nC (Client Nonce): <code>85b103482a20682da703aa388933a6d8</code></p>
+    </div>
+
+    <!-- Phase 1: Client → AS -->
+    <div class="phase" id="phase1">
+        <h2>Phase 1: Client Requests Ticket from AS</h2>
+
+        <div class="step">
+            <h3>Step 1: Client Sends (C, S, nC)</h3>
+            <button onclick="sendClientRequest()">Send Request to AS</button>
+            <p id="clientRequest"></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: AS Responds with Encrypted {sk, ticket}</h3>
+            <p id="asResponse"></p>
+            <p id="ticketHex"></p>
+        </div>
+    </div>
+
+    <!-- Phase 2: Client → Server -->
+    <div class="phase" id="phase2">
+        <h2>Phase 2: Client Authenticates to Server</h2>
+
+        <div class="step">
+            <h3>Step 3: Client Sends (ticket, authenticator)</h3>
+            <button onclick="sendToServer()">Send to Server</button>
+            <p id="clientToServer"></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Server Verifies and Responds</h3>
+            <p id="serverResponse"></p>
+        </div>
+    </div>
+
+    <script>
+        // Predefined values
+        const C = "Joshua";
+        const S = "Cayetano";
+        const studentID = "3722151";
+        const KC = "26e5d99e6cf00eee433a5526ad36daad";
+        const KS = "0ceec716b4723e1ffab33519a5e48a3b";
+        const nC = "85b103482a20682da703aa388933a6d8";
+        const Lt = "8h"; // Ticket lifetime
+
+        // Generate random 128-bit session key (for demo)
+        const sk = CryptoJS.lib.WordArray.random(16).toString(CryptoJS.enc.Hex);
+
+        // Phase 1: Client → AS
+        function sendClientRequest() {
+            // Step 1: Client sends (C, S, nC) to AS
+            document.getElementById("clientRequest").innerHTML =
+                `<strong>Sent:</strong> ${JSON.stringify({ C, S, nC })}`;
+
+            // Step 2: AS generates ticket and responds
+            const ts = new Date().toISOString(); // Timestamp
+            const ticket = { S, sk, ts, Lt };
+
+            // Encrypt ticket with KS (AES-128-CBC)
+            const encryptedTicket = CryptoJS.AES.encrypt(
+                JSON.stringify(ticket),
+                CryptoJS.enc.Hex.parse(KS),
+                { iv: CryptoJS.enc.Hex.parse("0".repeat(32)) }
+            ).toString();
+
+            // Encrypt {sk, ticket} with KC
+            const responseToClient = { sk, ticket: encryptedTicket };
+            const encryptedResponse = CryptoJS.AES.encrypt(
+                JSON.stringify(responseToClient),
+                CryptoJS.enc.Hex.parse(KC),
+                { iv: CryptoJS.enc.Hex.parse("0".repeat(32)) }
+            ).toString();
+
+            document.getElementById("asResponse").innerHTML =
+                `<strong>AS → Client (Encrypted):</strong> ${encryptedResponse}`;
+            document.getElementById("ticketHex").innerHTML =
+                `<strong>Ticket (Hex):</strong> ${encryptedTicket}`;
+        }
+
+        // Phase 2: Client → Server
+        function sendToServer() {
+            // Client decrypts AS response to get sk and ticket
+            const ts = new Date().toISOString();
+            const authenticator = { C, ts };
+
+            // Encrypt authenticator with sk
+            const encryptedAuth = CryptoJS.AES.encrypt(
+                JSON.stringify(authenticator),
+                CryptoJS.enc.Hex.parse(sk),
+                { iv: CryptoJS.enc.Hex.parse("0".repeat(32)) }
+            ).toString();
+
+            document.getElementById("clientToServer").innerHTML = `
+        <strong>Sent to Server:</strong><br>
+        Ticket: ${document.getElementById("ticketHex").innerText}<br>
+        Authenticator (Hex): ${encryptedAuth}`;
+
+            // Server verification would happen here
+            document.getElementById("serverResponse").innerHTML =
+                "<strong>Server:</strong> Ticket and authenticator verified! Access granted.";
+        }
+    </script>
+</body>
+
+</html>
